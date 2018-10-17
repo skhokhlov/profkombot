@@ -13,15 +13,22 @@ services:
     restart: always
     ports:
       - 8081:8080
+    depends_on:
+      - "db"
 
-  web:
+  api:
     build: ./api
     ports:
       - 8080:5000
     environment:
       DATABASE_PASSWORD: example
+    depends_on:
+      - "db"
 
   bot:
     build: ./bot
     environment:
       BOT_TOKEN: '698374984:AAHt2v4CkCeJFomAzB0eJ7YQWCaDv5lFINw'
+    depends_on:
+      - "db"
+      - "api"

@@ -3,6 +3,7 @@
 const Telegraf = require('telegraf');
 const Extra = require('telegraf/extra');
 const session = require('telegraf/session');
+const request = require('request');
 const {reply} = Telegraf;
 
 const randomPhoto = 'https://picsum.photos/200/300/?random';
@@ -59,6 +60,10 @@ bot.command('cat2', ({replyWithPhoto}) => replyWithPhoto({url: randomPhoto}));
 
 // Look ma, reply middleware factory
 bot.command('foo', reply('http://coub.com/view/9cjmt'));
+
+bot.command('api', ctx => request('http://api/', (error, res, body) => {
+    return ctx.reply(res).catch(err => console.log(err));
+}));
 
 // Wow! RegEx
 bot.hears(/reverse (.+)/, ({match, reply}) => reply(match[1].split('').reverse().join('')));
