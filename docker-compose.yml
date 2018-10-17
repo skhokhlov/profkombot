@@ -3,7 +3,7 @@ version: '3.1'
 services:
 
   db:
-    image: postgres
+    image: postgres:alpine
     restart: always
     environment:
       POSTGRES_PASSWORD: example
@@ -18,3 +18,10 @@ services:
     build: ./api
     ports:
       - 8080:5000
+    environment:
+      DATABASE_PASSWORD: example
+
+  bot:
+    build: ./bot
+    environment:
+      BOT_TOKEN: '698374984:AAHt2v4CkCeJFomAzB0eJ7YQWCaDv5lFINw'

@@ -1,10 +1,28 @@
+import sys
+import os
 from flask import Flask, jsonify, make_response, abort
+import psycopg2
 
 app = Flask(__name__)
 
+try:
+    conn = psycopg2.connect("dbname='postrges' user='postrges' host='db' password='" +
+                            os.environ.get('DATABASE_PASSWORD') + "'")
+except:
+    print("Unexpected error:", sys.exc_info()[0])
+    raise
+
+
+@app.route('/api/v1/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    cur = conn.cursor()
+    cur.execute("""SELECT * from test""")
+    rows = cur.fetchall()
+    return jsonify(rows)
+
 
 @app.route('/', methods=['GET'])
-def get_tasks():
+def get_home():
     return jsonify({'status': 'OK'})
 
 
