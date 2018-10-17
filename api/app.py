@@ -6,7 +6,7 @@ import psycopg2
 app = Flask(__name__)
 
 try:
-    conn = psycopg2.connect("dbname='postrges' user='postrges' host='db' password='" +
+    conn = psycopg2.connect("dbname='postgres' user='postgres' host='db' password='" +
                             os.environ.get('DATABASE_PASSWORD') + "'")
 except:
     print("Unexpected error:", sys.exc_info()[0])
