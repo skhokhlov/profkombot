@@ -61,8 +61,12 @@ bot.command('cat2', ({replyWithPhoto}) => replyWithPhoto({url: randomPhoto}));
 // Look ma, reply middleware factory
 bot.command('foo', reply('http://coub.com/view/9cjmt'));
 
-bot.command('api', ctx => request('http://api/', (error, res, body) => {
-    return ctx.reply(res).catch(err => console.log(err));
+bot.command('api', ctx => request('http://api:5000/', (error, res, body) => {
+    return ctx.reply(body).catch(err => console.error(err));
+}));
+
+bot.hears(/rzd (.+)/, ({match, reply}) => request(`http://api:5000/api/v1/user/${match[1]}`, (error, res, body) => {
+    return reply(body).catch(err => console.error(err));
 }));
 
 // Wow! RegEx
