@@ -6,9 +6,6 @@ const session = require('telegraf/session');
 const request = require('request');
 const {reply} = Telegraf;
 
-const randomPhoto = 'https://picsum.photos/200/300/?random';
-const sayYoMiddleware = ({reply}, next) => reply('yo').then(() => next());
-
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // // Register session middleware
@@ -29,48 +26,28 @@ bot.on('connected_website', ({reply}) => reply('Website connected'));
 // Telegram passport events
 bot.on('passport_data', ({reply}) => reply('Telegram password connected'));
 
-// Random location on some text messages
-bot.on('text', ({replyWithLocation}, next) => {
-    if (Math.random() > 0.2) {
-        return next()
-    }
-    return Promise.all([
-        replyWithLocation((Math.random() * 180) - 90, (Math.random() * 180) - 90),
-        next()
-    ])
-});
-
-// Text messages handling
-bot.hears('Hey', sayYoMiddleware, (ctx) => {
-    ctx.session.heyCounter = ctx.session.heyCounter || 0;
-    ctx.session.heyCounter++;
-    return ctx.replyWithMarkdown(`_Hey counter:_ ${ctx.session.heyCounter}`)
-});
-
-// Command handling
-bot.command('answer', sayYoMiddleware, (ctx) => {
-    console.log(ctx.message);
-    return ctx.reply('*42*', Extra.markdown())
-});
-
-bot.command('cat', ({replyWithPhoto}) => replyWithPhoto(randomPhoto));
-
-// Streaming photo, in case Telegram doesn't accept direct URL
-bot.command('cat2', ({replyWithPhoto}) => replyWithPhoto({url: randomPhoto}));
-
-// Look ma, reply middleware factory
-bot.command('foo', reply('http://coub.com/view/9cjmt'));
-
-bot.command('api', ctx => request('http://api:5000/', (error, res, body) => {
+bot.command('api', (ctx) => request('http://api:5000/', (error, res, body) => {
     return ctx.reply(body).catch(err => console.error(err));
 }));
 
-bot.hears(/rzd (.+)/, ({match, reply}) => request(`http://api:5000/api/v1/user/${match[1]}`, (error, res, body) => {
-    return reply(body).catch(err => console.error(err));
-}));
+bot.hears(/ржд|Ржд (.+)/, ({match, reply, session}) => {
+    const phone = Number(match[1]);
+    session.userPhone = session.userPhone || null;
+    session.requestCounter = session.requestCounter | 0;
 
-// Wow! RegEx
-bot.hears(/reverse (.+)/, ({match, reply}) => reply(match[1].split('').reverse().join('')));
+    if (session.userPhone !== phone && session.requestCounter <= 3) {
+        session.userPhone = phone;
+        session.requestCounter++;
+    }
+
+    if (session.requestCounter <= 3 || session.userPhone === phone) {
+        request(`http://api:5000/api/v1/user/${phone}`, (error, res, body) => {
+            reply(body).catch(err => console.error(err));
+        });
+    } else {
+        reply('Превышен лимит запросов разных номеров');
+    }
+});
 
 // Start polling
 bot.startPolling();

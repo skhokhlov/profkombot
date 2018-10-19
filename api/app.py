@@ -13,10 +13,10 @@ except:
     raise
 
 
-@app.route('/api/v1/user/<int:user_id>', methods=['GET'])
-def get_user(user_id):
+@app.route('/api/v1/user/<int:user_phone>', methods=['GET'])
+def get_user(user_phone):
     cur = conn.cursor()
-    cur.execute("""SELECT * from test""")
+    cur.execute("""SELECT * from test where tel=%s""", [user_phone])
     rows = cur.fetchall()
     return jsonify(rows)
 
