@@ -2,6 +2,7 @@
 
 const Telegraf = require('telegraf');
 const Extra = require('telegraf/extra');
+const Markup = require('telegraf/markup')
 const session = require('telegraf/session');
 const request = require('request');
 const {reply} = Telegraf;
@@ -20,6 +21,31 @@ bot.use((ctx, next) => {
     })
 });
 
+bot.command('start', (ctx) => {
+    return ctx.reply('Special buttons keyboard', Extra.markup((markup) => {
+        return markup.resize()
+            .keyboard([
+                markup.contactRequestButton('Send contact')
+            ])
+    }))
+});
+
+bot.on('contact', ({reply, session, message}) => {
+    session.userPhone = session.userPhone || null;
+    session.requestCounter = session.requestCounter | 0;
+
+    if (session.userPhone !== message.contact.phone_number && session.requestCounter <= 3) {
+        session.userPhone = message.contact.phone_number;
+        session.requestCounter++;
+    }
+
+    if (!(session.requestCounter <= 3 || session.userPhone === message.contact.phone_number)) {
+        return reply('Превышен лимит запросов разных номеров');
+    } else {
+        return reply('Ok');
+    }
+});
+
 // Login widget events
 bot.on('connected_website', ({reply}) => reply('Website connected'));
 
@@ -30,23 +56,14 @@ bot.command('api', (ctx) => request('http://api:5000/', (error, res, body) => {
     return ctx.reply(body).catch(err => console.error(err));
 }));
 
-bot.hears(/ржд|Ржд (.+)/, ({match, reply, session}) => {
-    const phone = Number(match[1]);
-    session.userPhone = session.userPhone || null;
-    session.requestCounter = session.requestCounter | 0;
+bot.command('me', (ctx) => {
+    return ctx.reply(ctx.session.userPhone || 'null');
+});
 
-    if (session.userPhone !== phone && session.requestCounter <= 3) {
-        session.userPhone = phone;
-        session.requestCounter++;
-    }
-
-    if (session.requestCounter <= 3 || session.userPhone === phone) {
-        request(`http://api:5000/api/v1/user/${phone}`, (error, res, body) => {
-            reply(body).catch(err => console.error(err));
-        });
-    } else {
-        reply('Превышен лимит запросов разных номеров');
-    }
+bot.hears(/ржд|Ржд/, ({match, reply, session}) => {
+    request(`http://api:5000/api/v1/user/${session.userPhone}`, (error, res, body) => {
+        reply(body).catch(err => console.error(err));
+    })
 });
 
 // Start polling
