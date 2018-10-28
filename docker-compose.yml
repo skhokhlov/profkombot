@@ -15,8 +15,6 @@ services:
     restart: always
     ports:
       - 8081:8080
-    depends_on:
-      - "db"
 
   api:
     build: ./api

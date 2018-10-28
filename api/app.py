@@ -15,10 +15,51 @@ except:
 
 @app.route('/api/v1/user/<int:user_phone>', methods=['GET'])
 def get_user(user_phone):
-    cur = conn.cursor()
-    cur.execute("""SELECT * from test where tel=%s""", [user_phone])
-    rows = cur.fetchall()
-    return jsonify(rows)
+    try:
+        cur = conn.cursor()
+        cur.execute("""SELECT * FROM test WHERE tel=%s""", [user_phone])
+        rows = cur.fetchall()
+        rows.append(('status', 'OK'))
+        rows.reverse()
+        return jsonify(rows)
+
+    except psycopg2.Error as exception:
+        return jsonify({
+            'status': 'Error',
+            'error': exception.pgerror
+        })
+
+
+@app.route('/api/v1/chat/<int:chat_id>/tel/<int:tel>', methods=['POST'])
+def set_chat(chat_id, tel):
+    try:
+        cur = conn.cursor()
+        cur.execute("""INSERT INTO chats (chat_id, tel) VALUES ($s, %s) ON CONFLICT (chat_id) DO UPDATE""",
+                    [chat_id, tel])
+        return jsonify({'status': 'OK'})
+
+    except psycopg2.Error as exception:
+        return jsonify({
+            'status': 'Error',
+            'error': exception.pgerror
+        })
+
+
+@app.route('/api/v1/chat/<int:chat_id>', methods=['GET'])
+def get_chat(chat_id):
+    try:
+        cur = conn.cursor()
+        cur.execute("""SELECT chat_id, tel FROM chats WHERE chat_id=%s""", [chat_id])
+        rows = cur.fetchall()
+        rows.append(('status', 'OK'))
+        rows.reverse()
+        return jsonify(rows)
+
+    except psycopg2.Error as exception:
+        return jsonify({
+            'status': 'Error',
+            'error': exception.pgerror
+        })
 
 
 @app.route('/', methods=['GET'])
@@ -28,7 +69,7 @@ def get_home():
 
 @app.errorhandler(404)
 def not_found(error):
-    return make_response(jsonify({'error': 'Not Found'}), 404)
+    return make_response(jsonify({'status': 'Not Found'}), 404)
 
 
 if __name__ == '__main__':
