@@ -1,65 +1,63 @@
 import sys
 import os
+import json
 from flask import Flask, jsonify, make_response, abort
 import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 
-try:
-    conn = psycopg2.connect("dbname='postgres' user='postgres' host='db' password='" +
-                            os.environ.get('DATABASE_PASSWORD') + "'")
-except:
-    print("Unexpected error:", sys.exc_info()[0])
-    raise
+
+conn = psycopg2.connect("dbname='postgres' user='postgres' host='db' password='" +
+                        os.environ.get('DATABASE_PASSWORD') + "'")
 
 
 @app.route('/api/v1/user/<int:user_phone>', methods=['GET'])
 def get_user(user_phone):
     try:
-        cur = conn.cursor()
-        cur.execute("""SELECT * FROM test WHERE tel=%s""", [user_phone])
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""SELECT id, tel, first_name FROM test WHERE tel=%s""", [user_phone])
         rows = cur.fetchall()
-        rows.append(('status', 'OK'))
-        rows.reverse()
-        return jsonify(rows)
+
+        if len(rows) == 0:
+            return make_response(json.dumps([dict(zip(['status'], ['Not Found']))]), 404)
+
+        else:
+            return make_response(json.dumps(rows), 200)
 
     except psycopg2.Error as exception:
-        return jsonify({
-            'status': 'Error',
-            'error': exception.pgerror
-        })
+        return make_response(json.dumps([dict(zip(['status', 'error'], ['Error', exception.pgerror]))]), 500)
 
 
 @app.route('/api/v1/chat/<int:chat_id>/tel/<int:tel>', methods=['POST'])
 def set_chat(chat_id, tel):
     try:
         cur = conn.cursor()
-        cur.execute("""INSERT INTO chats (chat_id, tel) VALUES ($s, %s) ON CONFLICT (chat_id) DO UPDATE""",
-                    [chat_id, tel])
-        return jsonify({'status': 'OK'})
+        cur.execute(
+            """INSERT INTO chats VALUES (%s, %s) ON CONFLICT (chat_id) DO UPDATE SET chat_id = EXCLUDED.chat_id""",
+            [chat_id, tel])
+        conn.commit()
+        return make_response(json.dumps([dict(zip(['status'], ['OK']))]), 404)
 
     except psycopg2.Error as exception:
-        return jsonify({
-            'status': 'Error',
-            'error': exception.pgerror
-        })
+        return make_response(json.dumps([dict(zip(['status', 'error'], ['Error', exception.pgerror]))]), 500)
 
 
 @app.route('/api/v1/chat/<int:chat_id>', methods=['GET'])
 def get_chat(chat_id):
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""SELECT chat_id, tel FROM chats WHERE chat_id=%s""", [chat_id])
         rows = cur.fetchall()
-        rows.append(('status', 'OK'))
-        rows.reverse()
-        return jsonify(rows)
+
+        if len(rows) == 0:
+            return make_response(json.dumps([dict(zip(['status'], ['Not Found']))]), 404)
+
+        else:
+            return make_response(json.dumps(rows), 200)
 
     except psycopg2.Error as exception:
-        return jsonify({
-            'status': 'Error',
-            'error': exception.pgerror
-        })
+        return make_response(json.dumps([dict(zip(['status', 'error'], ['Error', exception.pgerror]))]), 500)
 
 
 @app.route('/', methods=['GET'])
@@ -73,4 +71,4 @@ def not_found(error):
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host="0.0.0.0", threaded=True, debug=True)
