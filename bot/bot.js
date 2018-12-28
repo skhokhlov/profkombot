@@ -12,6 +12,8 @@ const api = 'http://api:5000/api/v1/';
 
 const sendError = (reply) => reply('Произошла ошибка').catch((err) => console.error(err));
 
+const makeUpTel = (tel) => parseInt(tel.replace(/^\+7/, 8));
+
 class User {
     get last_name() {
         return this._last_name;
@@ -75,7 +77,8 @@ function requestKeyboard(reply) {
         Extra.markup((markup) => {
             return markup.resize().keyboard([
                 markup.callbackButton('РЖД бонус', 'ржд бонус'),
-                markup.callbackButton('Мои данные', 'Мои данные')
+                markup.callbackButton('Дотации', 'Дотации'),
+                markup.callbackButton('Основное меню', 'Основное меню')
             ])
         }));
 }
@@ -147,9 +150,10 @@ bot.command('start', (ctx => ctx.reply("Бот Профокма студенто
         ])
 }))));
 
-bot.on('contact', ({reply, session, message}) => { reply("На данный момент эта функция недоступна. " +
-    "В будещем по номеру телефона можно будет опредлять стаутс заявки " +
-    "РЖД бонус и узнавать состояние заявления на дотации.") });
+bot.on('contact', ({reply, session, message}) => {
+    session.tel = makeUpTel(message.contact.phone_number);
+    requestKeyboard(reply);
+});
 // bot.on('contact', ({reply, session, message}) => {
 //     session.user = session.user || null;
 //     session.requestCounter = session.requestCounter || 0;
@@ -259,6 +263,30 @@ bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
     } else {
         requestContact(reply);
 
+    }
+});
+
+bot.hears(/Дотации/, ({match, reply, session}) => {
+    if (session.tel == null) {
+        reply('Сначала нужно отправить номер телефона');
+        return requestContact(reply);
+    } else {
+        request.get(`${api}user/${session.tel}`, (err, res, body) => {
+            if (err) {
+                console.error(`${api}chat/${message.chat.id}/tel/${session.userPhone}\n ${err}`);
+                return sendError(reply);
+
+            }
+
+            if (res.statusCode === 200) {
+                let data = JSON.parse(body)[0];
+                return reply(`${session.userPhone} + ${data.status}`).catch(err => console.error(err));
+
+            } else {
+                return sendError(reply);
+
+            }
+        })
     }
 });
 
