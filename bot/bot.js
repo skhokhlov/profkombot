@@ -73,7 +73,7 @@ function requestContact(reply) {
  * @returns {*} keyboard
  */
 function requestKeyboard(reply) {
-    return reply('Теперь вы можете проверить наличие в базе',
+    return reply('Вы можете проверить наличие в базе',
         Extra.markup((markup) => {
             return markup.resize().keyboard([
                 markup.callbackButton('РЖД бонус', 'ржд бонус'),
@@ -81,6 +81,17 @@ function requestKeyboard(reply) {
                 markup.callbackButton('Основное меню', 'Основное меню')
             ])
         }));
+}
+
+function mainMenu() {
+    Extra.markup((markup) => {
+        return markup.resize()
+            .keyboard([
+                markup.callbackButton('Контакты отделений', 'Контакты отделений'),
+                markup.callbackButton('Часы работы', 'Часы работы'),
+                markup.callbackButton('Статусы заявок', 'Статусы заявок')
+            ])
+    });
 }
 
 /**
@@ -141,14 +152,7 @@ bot.use((ctx, next) => {
 });
 
 // bot.command('start', (ctx) => requestContact(ctx.reply));
-bot.command('start', (ctx => ctx.reply("Бот Профокма студентов РТУ МИРЭА. Бот работает в тестовом режиме.", Extra.markup((markup) => {
-    return markup.resize()
-        .keyboard([
-            markup.callbackButton('Контакты отделений', 'Контакты отделений'),
-            markup.callbackButton('Часы работы', 'Часы работы'),
-            markup.contactRequestButton('Отправить контакт')
-        ])
-}))));
+bot.command('start', (ctx => ctx.reply("Бот Профокма студентов РТУ МИРЭА. Бот работает в тестовом режиме.", mainMenu())));
 
 bot.on('contact', ({reply, session, message}) => {
     session.tel = makeUpTel(message.contact.phone_number);
@@ -301,6 +305,8 @@ bot.hears(/Контакты отделений/, ({match, reply, session}) => {
 bot.hears(/Часы работы/, ({match, reply, session}) => {
     reply(`Отделения Профкома студентов работают с 11 до 17 часов с понедельника по пятницу.`)
 });
+
+bot.hears(/Статусы заявок/, ({match, reply, session}) => requestKeyboard(reply));
 
 // Start polling
 bot.startPolling();
