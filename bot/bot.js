@@ -12,7 +12,7 @@ const api = 'http://api:5000/api/v1/';
 
 const sendError = (reply) => reply('Произошла ошибка').catch((err) => console.error(err));
 
-const makeUpTel = (tel) => parseInt(tel.replace(/^\+7/, 8));
+const makeUpTel = (tel) => parseInt(tel.replace(/^\+7/, 8).replace(/^7/, 8));
 
 class User {
     get last_name() {
