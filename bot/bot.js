@@ -240,29 +240,29 @@ bot.command('api', (ctx) => request(api, (error, res, body) => {
     return ctx.reply(body).catch(err => console.error(err));
 }));
 
-bot.hears(/Мои данные/, ({reply, session}) => reply(session.userPhone || 'null'));
+bot.hears(/Мои данные/, ({reply, session}) => reply(session.tel || 'null'));
 
 bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
-    if (session.userPhone != null) {
-        request.get(`${api}user/${session.userPhone}`, (err, res, body) => {
+    if (session.tel == null) {
+        reply('Сначала нужно отправить номер телефона');
+        return requestContact(reply);
+    } else {
+        request.get(`${api}user/${session.tel}`, (err, res, body) => {
             if (err) {
-                console.error(`${api}chat/${message.chat.id}/tel/${session.userPhone}\n ${err}`);
+                console.error(`${api}chat/${message.chat.id}/tel/${session.tel}\n ${err}`);
                 sendError(reply);
 
             }
 
             if (res.statusCode === 200) {
                 let data = JSON.parse(body);
-                reply(`${session.userPhone} + ${data[1][2]} есть в базе РЖД бонус`).catch(err => console.error(err));
+                reply(`${session.tel} ${data.status} есть в базе РЖД бонус`).catch(err => console.error(err));
 
             } else {
                 sendError(reply);
 
             }
         });
-    } else {
-        requestContact(reply);
-
     }
 });
 
@@ -273,14 +273,14 @@ bot.hears(/Дотации/, ({match, reply, session}) => {
     } else {
         request.get(`${api}user/${session.tel}`, (err, res, body) => {
             if (err) {
-                console.error(`${api}chat/${message.chat.id}/tel/${session.userPhone}\n ${err}`);
+                console.error(`${api}chat/${message.chat.id}/tel/${session.tel}\n ${err}`);
                 return sendError(reply);
 
             }
 
             if (res.statusCode === 200) {
                 let data = JSON.parse(body)[0];
-                return reply(`${session.userPhone} + ${data.status}`).catch(err => console.error(err));
+                return reply(`${session.tel} ${data.status}`).catch(err => console.error(err));
 
             } else {
                 return sendError(reply);
