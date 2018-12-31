@@ -20,13 +20,13 @@ def get_user(user_phone):
         rows = cur.fetchall()
 
         if len(rows) == 0:
-            return make_response(json.dumps([dict(zip(['status'], ['Not Found']))]), 404)
+            return make_response(json.dumps([dict(zip(['requestError'], ['Not Found']))]), 404)
 
         else:
             return make_response(json.dumps(rows), 200)
 
     except psycopg2.Error as exception:
-        return make_response(json.dumps([dict(zip(['status', 'error'], ['Error', exception.pgerror]))]), 500)
+        return make_response(json.dumps([dict(zip(['requestError', 'error'], ['Error', exception.pgerror]))]), 500)
 
 
 @app.route('/api/v1/chat/<int:chat_id>/tel/<int:tel>', methods=['POST'])
@@ -37,10 +37,10 @@ def set_chat(chat_id, tel):
             """INSERT INTO chats VALUES (%s, %s) ON CONFLICT (chat_id) DO UPDATE SET chat_id = EXCLUDED.chat_id""",
             [chat_id, tel])
         conn.commit()
-        return make_response(json.dumps([dict(zip(['status'], ['OK']))]), 404)
+        return make_response(json.dumps([dict(zip(['requestError'], ['OK']))]), 404)
 
     except psycopg2.Error as exception:
-        return make_response(json.dumps([dict(zip(['status', 'error'], ['Error', exception.pgerror]))]), 500)
+        return make_response(json.dumps([dict(zip(['requestError', 'error'], ['Error', exception.pgerror]))]), 500)
 
 
 @app.route('/api/v1/chat/<int:chat_id>', methods=['GET'])
@@ -51,13 +51,13 @@ def get_chat(chat_id):
         rows = cur.fetchall()
 
         if len(rows) == 0:
-            return make_response(json.dumps([dict(zip(['status'], ['Not Found']))]), 404)
+            return make_response(json.dumps([dict(zip(['requestError'], ['Not Found']))]), 404)
 
         else:
             return make_response(json.dumps(rows), 200)
 
     except psycopg2.Error as exception:
-        return make_response(json.dumps([dict(zip(['status', 'error'], ['Error', exception.pgerror]))]), 500)
+        return make_response(json.dumps([dict(zip(['requestError', 'error'], ['Error', exception.pgerror]))]), 500)
 
 
 @app.route('/', methods=['GET'])
@@ -67,7 +67,7 @@ def get_home():
 
 @app.errorhandler(404)
 def not_found(error):
-    return make_response(jsonify({'status': 'Not Found'}), 404)
+    return make_response(jsonify({'requestError': 'Not Found'}), 404)
 
 
 if __name__ == '__main__':
