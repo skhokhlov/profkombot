@@ -246,7 +246,7 @@ bot.command('api', (ctx) => request(api, (error, res, body) => {
 
 bot.hears(/Мои данные/, ({reply, session}) => reply(session.tel || 'null'));
 
-bot.hears(/Основное меню/, ({reply}) => reply(mainMenu()));
+bot.hears(/Основное меню/, ({reply}) => reply("Основное меню", mainMenu()));
 
 bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
     if (session.tel == null) {
