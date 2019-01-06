@@ -268,6 +268,9 @@ bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
                 let data = JSON.parse(body);
                 reply(`${session.tel} есть в базе РЖД бонус`).catch(err => console.error(err));
 
+            } else if (res.statusCode === 404) {
+                return reply(`${session.tel} не найден в базе РЖД бонус`);
+
             } else {
                 sendError(reply);
 
@@ -293,8 +296,8 @@ bot.hears(/Дотации/, ({match, reply, session}) => {
                 return reply(`${session.tel} ${data.status}`).catch(err => console.error(err));
 
             } else if (res.statusCode === 404) {
-                return reply(`${session.tel} не найден в базе РЖД бонус`);
-                
+                return reply(`${session.tel} не найден в базе`);
+
             } else {
                 return sendError(reply);
 
