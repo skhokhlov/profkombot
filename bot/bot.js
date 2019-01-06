@@ -77,7 +77,7 @@ function requestKeyboard(reply) {
         Extra.markup((markup) => {
             return markup.resize().keyboard([
                 markup.callbackButton('РЖД бонус', 'ржд бонус'),
-                markup.callbackButton('Дотации', 'Дотации'),
+                // markup.callbackButton('Дотации', 'Дотации'),
                 markup.callbackButton('Основное меню', 'Основное меню')
             ])
         }));
@@ -246,6 +246,8 @@ bot.command('api', (ctx) => request(api, (error, res, body) => {
 
 bot.hears(/Мои данные/, ({reply, session}) => reply(session.tel || 'null'));
 
+bot.hears(/Основное меню/, ({reply}) => reply(mainMenu()));
+
 bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
     if (session.tel == null) {
         reply('Сначала нужно отправить номер телефона');
@@ -260,7 +262,7 @@ bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
 
             if (res.statusCode === 200) {
                 let data = JSON.parse(body);
-                reply(`${session.tel} ${data.status} есть в базе РЖД бонус`).catch(err => console.error(err));
+                reply(`${session.tel} есть в базе РЖД бонус`).catch(err => console.error(err));
 
             } else {
                 sendError(reply);
