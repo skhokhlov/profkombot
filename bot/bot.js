@@ -292,6 +292,9 @@ bot.hears(/Дотации/, ({match, reply, session}) => {
                 let data = JSON.parse(body)[0];
                 return reply(`${session.tel} ${data.status}`).catch(err => console.error(err));
 
+            } else if (res.statusCode === 404) {
+                return reply(`${session.tel} не найден в базе РЖД бонус`);
+                
             } else {
                 return sendError(reply);
 
