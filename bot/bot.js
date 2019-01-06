@@ -153,7 +153,7 @@ bot.use((ctx, next) => {
 });
 
 // bot.command('start', (ctx) => requestContact(ctx.reply));
-bot.command('start', ({reply}) => mainMenu(reply));
+bot.command('start', ({reply}) => reply('Бот Профокма студентов РТУ МИРЭА. Бот работает в тестовом режиме.'), mainMenu(reply));
 
 bot.on('contact', ({reply, session, message}) => {
     session.tel = makeUpTel(message.contact.phone_number);
