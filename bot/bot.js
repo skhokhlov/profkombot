@@ -83,15 +83,16 @@ function requestKeyboard(reply) {
         }));
 }
 
-function mainMenu() {
-    Extra.markup((markup) => {
-        return markup.resize()
-            .keyboard([
-                markup.callbackButton('Контакты отделений', 'Контакты отделений'),
-                markup.callbackButton('Часы работы', 'Часы работы'),
-                markup.callbackButton('Статусы заявок', 'Статусы заявок')
-            ])
-    });
+function mainMenu(reply) {
+    return reply('Основное меню',
+        Extra.markup((markup) => {
+            return markup.resize()
+                .keyboard([
+                    markup.callbackButton('Контакты отделений', 'Контакты отделений'),
+                    markup.callbackButton('Часы работы', 'Часы работы'),
+                    markup.callbackButton('Статусы заявок', 'Статусы заявок')
+                ])
+        }));
 }
 
 /**
@@ -152,7 +153,7 @@ bot.use((ctx, next) => {
 });
 
 // bot.command('start', (ctx) => requestContact(ctx.reply));
-bot.command('start', (ctx => ctx.reply("Бот Профокма студентов РТУ МИРЭА. Бот работает в тестовом режиме.", mainMenu())));
+bot.command('start', ({reply}) => mainMenu(reply));
 
 bot.on('contact', ({reply, session, message}) => {
     session.tel = makeUpTel(message.contact.phone_number);
@@ -246,7 +247,7 @@ bot.command('api', (ctx) => request(api, (error, res, body) => {
 
 bot.hears(/Мои данные/, ({reply, session}) => reply(session.tel || 'null'));
 
-bot.hears(/Основное меню/, ({reply}) => reply("Основное меню", mainMenu()));
+bot.hears(/Основное меню/, ({reply}) => mainMenu(reply));
 
 bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
     if (session.tel == null) {
