@@ -1,0 +1,35 @@
+version: '3.2'
+
+services:
+
+  db:
+    image: postgres:11-alpine
+    restart: always
+    volumes:
+    - ./postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  api:
+    build: ./api
+    restart: always
+    environment:
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+    - "db"
+
+  bot:
+    build: ./bot
+    restart: always
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+    depends_on:
+    - "db"
+    - "api"
+
+  feedback:
+    build: ./feedback
+    restart: always
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN_FEEDBACK}
+      ADMIN_ID: ${ADMIN_ID}
