@@ -34,3 +34,10 @@ services:
     depends_on:
       - "db"
       - "api"
+
+  feedback:
+    build: ./feedback
+    restart: always
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN_FEEDBACK}
+      ADMIN_ID: ${ADMIN_ID}
