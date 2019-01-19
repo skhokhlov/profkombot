@@ -90,7 +90,7 @@ function mainMenu(reply) {
                 .keyboard([
                     [markup.callbackButton('Контакты отделений', 'Контакты отделений'),
                         markup.callbackButton('Часы работы', 'Часы работы'),],
-                    [markup.urlButton('Задать вопрос', 'https://t.me/mireaprofkomfeedbackbot'),
+                    [markup.callbackButton('Задать вопрос', 'Задать вопрос'),
                         markup.callbackButton('Статусы заявок', 'Статусы заявок')]
                 ])
         }));
@@ -252,6 +252,11 @@ bot.command('api', (ctx) => request(api, (error, res, body) => {
 bot.hears(/Мои данные/, ({reply, session}) => reply(session.tel || 'null'));
 
 bot.hears(/Основное меню/, ({reply}) => mainMenu(reply));
+
+bot.hears(/Задать вопрос/, ({reply}) => reply('Сейчас задать вопрос можно только в другом боте',
+    Extra.markup((markup) => markup.inlineKeyboard([
+        Markup.urlButton('Перейти️', 'https://t.me/mireaprofkomfeedbackbot')
+    ]))));
 
 bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
     if (session.tel == null) {
