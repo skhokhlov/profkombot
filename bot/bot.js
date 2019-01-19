@@ -90,6 +90,7 @@ function mainMenu(reply) {
                 .keyboard([
                     markup.callbackButton('Контакты отделений', 'Контакты отделений'),
                     markup.callbackButton('Часы работы', 'Часы работы'),
+                    markup.urlButton('Задать вопрос', '@mireaprofkomfeedbackbot'),
                     markup.callbackButton('Статусы заявок', 'Статусы заявок')
                 ])
         }));
