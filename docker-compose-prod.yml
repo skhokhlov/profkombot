@@ -27,9 +27,11 @@ services:
     - "db"
     - "api"
 
-  feedback:
-    build: ./feedback
+  adminbot:
+    build: ./adminbot
     restart: always
     environment:
-      BOT_TOKEN: ${BOT_TOKEN_FEEDBACK}
-      ADMIN_ID: ${ADMIN_ID}
+      BOT_TOKEN: ${ADMINBOT_TOKEN}
+    depends_on:
+    - "db"
+    - "api"
