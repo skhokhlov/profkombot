@@ -88,10 +88,10 @@ function mainMenu(reply) {
         Extra.markup((markup) => {
             return markup.resize()
                 .keyboard([
-                    markup.callbackButton('Контакты отделений', 'Контакты отделений'),
-                    markup.callbackButton('Часы работы', 'Часы работы'),
-                    markup.urlButton('Задать вопрос', '@mireaprofkomfeedbackbot'),
-                    markup.callbackButton('Статусы заявок', 'Статусы заявок')
+                    [markup.callbackButton('Контакты отделений', 'Контакты отделений'),
+                        markup.callbackButton('Часы работы', 'Часы работы'),],
+                    [markup.urlButton('Задать вопрос', 'https://t.me/mireaprofkomfeedbackbot'),
+                        markup.callbackButton('Статусы заявок', 'Статусы заявок')]
                 ])
         }));
 }
