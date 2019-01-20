@@ -13,7 +13,6 @@ const api = 'http://api:5000/api/v1/';
 const sendError = (reply) => reply('Произошла ошибка').catch((err) => console.error(err));
 
 
-
 // // Register session middleware
 bot.use(session());
 
@@ -31,19 +30,25 @@ bot.command('start', ({reply}) => {
 });
 
 bot.on('document', ({reply, session, message, telegram}) => {
-    if (/^ржд$/.test(message.caption.toLowerCase())){
-        request.post({
-            url: `${api}rzd`,
-            file: telegram.getFile(message.document.file_id)
-        }, (err, res, body) => {
-            if (err) {
-                console.error(`${api}rzd\n ${err}`);
-                return sendError(reply);
+    if (message.caption == null) {
+        return reply('Для корректной работы нужно отправить файл с подписью');
+    }
 
-            }
+    if (/^(ржд|rzd)$/.test(message.caption.toLowerCase())) {
+        reply('Обновление базы РЖД');
+        telegram.getFile(message.document.file_id).then(({file_path}) => {
+            request.get(`https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file_path}`).pipe(
+                request.put(`${api}rzd`), (err, res, body) => {
+                    if (err) {
+                        console.error(`${api}rzd\n ${err}`);
+                        return sendError(reply);
 
-            console.log('RZD update success');
-            reply('База обновлена')
+                    }
+
+                    console.log('RZD update success');
+                    reply('База обновлена');
+                }
+            )
         });
     }
 });
