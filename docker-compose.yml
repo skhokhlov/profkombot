@@ -10,6 +10,13 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
+  redis:
+    image: redis:5.0.3
+    restart: always
+    volumes:
+      - ./redis-data:/data
+    command: redis-server --appendonly yes
+
   adminer:
     image: adminer
     restart: always
