@@ -29,12 +29,19 @@ def get_user(user_phone):
 
 @app.route('/', methods=['GET'])
 def get_home():
-    return jsonify({'status': 'OK'})
-
+    return make_response(json.dumps(dict(zip(['status'], ['OK']))), 200)
 
 @app.errorhandler(404)
 def not_found(error):
-    return make_response(jsonify({'requestError': 'Not Found'}), 404)
+    return make_response(json.dumps(dict(zip(['status'], ['Not Found']))), 404)
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return make_response(json.dumps(dict(zip(['status'], ['Method Not Allowed']))), 405)
+
+@app.errorhandler(500)
+def server_error(error):
+    return make_response(json.dumps(dict(zip(['status'], ['Server Error']))), 500)
 
 
 if __name__ == '__main__':
