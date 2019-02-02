@@ -2,13 +2,13 @@ version: '3.2'
 
 services:
 
-  db:
-    image: postgres:11-alpine
-    restart: always
-    volumes:
-      - ./postgres-data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#  db:
+#    image: postgres:11-alpine
+#    restart: always
+#    volumes:
+#      - ./postgres-data:/var/lib/postgresql/data
+#    environment:
+#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
   redis:
     image: redis:5.0.3
@@ -17,21 +17,29 @@ services:
       - ./redis-data:/data
     command: redis-server --appendonly yes
 
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8081:8080
+#  adminer:
+#    image: adminer
+#    restart: always
+#    ports:
+#      - 8081:8080
+
+#  api-psql:
+#    build: api-psql
+#    restart: always
+#    ports:
+#      - 8080:5000
+#    environment:
+#      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+#    depends_on:
+#      - "db"
 
   api:
-    build: ./api
+    build: api
     restart: always
     ports:
-      - 8080:5000
-    environment:
-      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+    - 8080:5000
     depends_on:
-      - "db"
+    - "redis"
 
   bot:
     build: ./bot
@@ -39,7 +47,7 @@ services:
     environment:
       BOT_TOKEN: ${BOT_TOKEN}
     depends_on:
-      - "db"
+      - "redis"
       - "api"
 
   adminbot:
@@ -48,5 +56,5 @@ services:
     environment:
       BOT_TOKEN: ${ADMINBOT_TOKEN}
     depends_on:
-      - "db"
+      - "redis"
       - "api"

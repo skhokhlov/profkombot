@@ -1,73 +1,61 @@
-import sys
 import os
 import json
-from flask import Flask, jsonify, make_response, abort
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import re
+import csv
+from enum import Enum
+import redis
+from flask import Flask, make_response, abort
 
 app = Flask(__name__)
+r = redis.Redis(host='redis', port=6379, db=0)
 
+class Tables(Enum):
+    RZD = 'RZD'
 
-conn = psycopg2.connect("dbname='postgres' user='postgres' host='db' password='" +
-                        os.environ.get('DATABASE_PASSWORD') + "'")
+def parse_number(tel):
+    return re.sub(r'^8', '7', str(int(tel)))
 
-
-@app.route('/api/v1/user/<int:user_phone>', methods=['GET'])
+@app.route('/api/v1/rzd/<int:user_phone>', methods=['GET'])
 def get_user(user_phone):
-    try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("""SELECT id, tel, first_name FROM test WHERE tel=%s""", [user_phone])
-        rows = cur.fetchall()
+    tel = parse_number(user_phone)
+    if r.sismember(tel, Tables.RZD):
+        return make_response(json.dumps(dict(zip(['rzd'], [True]))), 200)
 
-        if len(rows) == 0:
-            return make_response(json.dumps([dict(zip(['requestError'], ['Not Found']))]), 404)
+    else:
+        return make_response(json.dumps(dict(zip(['rzd'], [False]))), 404)
 
-        else:
-            return make_response(json.dumps(rows), 200)
+@app.route('/api/v1/rzd', methods=['PUT'])
+def db_update(request):
+    if request.files[0]:
+        csv_reader = csv.reader(request.files[0], delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0:
+                line_count += 1
+            else:
+                r.sadd(row[6], Tables.RZD)
+                line_count += 1
 
-    except psycopg2.Error as exception:
-        return make_response(json.dumps([dict(zip(['requestError', 'error'], ['Error', exception.pgerror]))]), 500)
+        make_response(json.dumps(dict(zip(['status'], ['OK']))), 200)
 
-
-@app.route('/api/v1/chat/<int:chat_id>/tel/<int:tel>', methods=['POST'])
-def set_chat(chat_id, tel):
-    try:
-        cur = conn.cursor()
-        cur.execute(
-            """INSERT INTO chats VALUES (%s, %s) ON CONFLICT (chat_id) DO UPDATE SET chat_id = EXCLUDED.chat_id""",
-            [chat_id, tel])
-        conn.commit()
-        return make_response(json.dumps([dict(zip(['requestError'], ['OK']))]), 404)
-
-    except psycopg2.Error as exception:
-        return make_response(json.dumps([dict(zip(['requestError', 'error'], ['Error', exception.pgerror]))]), 500)
-
-
-@app.route('/api/v1/chat/<int:chat_id>', methods=['GET'])
-def get_chat(chat_id):
-    try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("""SELECT chat_id, tel FROM chats WHERE chat_id=%s""", [chat_id])
-        rows = cur.fetchall()
-
-        if len(rows) == 0:
-            return make_response(json.dumps([dict(zip(['requestError'], ['Not Found']))]), 404)
-
-        else:
-            return make_response(json.dumps(rows), 200)
-
-    except psycopg2.Error as exception:
-        return make_response(json.dumps([dict(zip(['requestError', 'error'], ['Error', exception.pgerror]))]), 500)
-
+    else:
+        return make_response(json.dumps(dict(zip(['status'], ['Bad Request']))), 400)
 
 @app.route('/', methods=['GET'])
 def get_home():
-    return jsonify({'status': 'OK'})
-
+    return make_response(json.dumps(dict(zip(['status'], ['OK']))), 200)
 
 @app.errorhandler(404)
 def not_found(error):
-    return make_response(jsonify({'requestError': 'Not Found'}), 404)
+    return make_response(json.dumps(dict(zip(['status'], ['Not Found']))), 404)
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return make_response(json.dumps(dict(zip(['status'], ['Method Not Allowed']))), 405)
+
+@app.errorhandler(500)
+def server_error(error):
+    return make_response(json.dumps(dict(zip(['status'], ['Server Error']))), 500)
 
 
 if __name__ == '__main__':
