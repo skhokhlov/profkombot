@@ -1,9 +1,10 @@
 import os
 import json
 import re
+import csv
 from enum import Enum
 import redis
-from flask import Flask, jsonify, make_response, abort
+from flask import Flask, make_response, abort
 
 app = Flask(__name__)
 r = redis.Redis(host='redis', port=6379, db=0)
@@ -23,9 +24,22 @@ def get_user(user_phone):
     else:
         return make_response(json.dumps(dict(zip(['rzd'], [False]))), 404)
 
-# @app.route('/api/v1/rzd', methods=['PUT'])
-# def db_update(request):
-#     request.files
+@app.route('/api/v1/rzd', methods=['PUT'])
+def db_update(request):
+    if request.files[0]:
+        csv_reader = csv.reader(request.files[0], delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0:
+                line_count += 1
+            else:
+                r.sadd(row[6], Tables.RZD)
+                line_count += 1
+
+        make_response(json.dumps(dict(zip(['status'], ['OK']))), 200)
+
+    else:
+        return make_response(json.dumps(dict(zip(['status'], ['Bad Request']))), 400)
 
 @app.route('/', methods=['GET'])
 def get_home():
