@@ -26,3 +26,16 @@ def get_user(user_phone):
 # @app.route('/api/v1/rzd', methods=['PUT'])
 # def db_update(request):
 #     request.files
+
+@app.route('/', methods=['GET'])
+def get_home():
+    return jsonify({'status': 'OK'})
+
+
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({'requestError': 'Not Found'}), 404)
+
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", threaded=True, debug=True)
