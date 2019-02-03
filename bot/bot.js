@@ -263,9 +263,9 @@ bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
         reply('Сначала нужно отправить номер телефона');
         return requestContact(reply);
     } else {
-        request.get(`${api}user/${session.tel}`, (err, res, body) => {
+        request.get(`${api}rzd/${session.tel}`, (err, res, body) => {
             if (err) {
-                console.error(`${api}chat/${message.chat.id}/tel/${session.tel}\n ${err}`);
+                console.error(err);
                 sendError(reply);
 
             }

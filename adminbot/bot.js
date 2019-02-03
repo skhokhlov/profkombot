@@ -1,16 +1,22 @@
 'use strict';
 
+const fs = require('fs');
+
 const Telegraf = require('telegraf');
 const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
 const session = require('telegraf/session');
 const request = require('request');
+const csv = require("csvtojson");
 const {reply} = Telegraf;
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const api = 'http://api:5000/api/v1/';
 
-const sendError = (reply) => reply('Произошла ошибка').catch((err) => console.error(err));
+const sendError = (reply, err) => {
+    console.error(err);
+    reply('Произошла ошибка').catch((err) => console.error(err));
+};
 
 
 // // Register session middleware
@@ -37,19 +43,33 @@ bot.on('document', ({reply, session, message, telegram}) => {
     if (/^(ржд|rzd)$/.test(message.caption.toLowerCase())) {
         reply('Обновление базы РЖД');
         telegram.getFile(message.document.file_id).then(({file_path}) => {
-            request.get(`https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file_path}`).pipe(
-                request.put(`${api}rzd`), (err, res, body) => {
-                    if (err) {
-                        console.error(`${api}rzd\n ${err}`);
-                        return sendError(reply);
+            const writable = fs.createWriteStream('rzd.csv');
+            let stream = request.get(`https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file_path}`)
+                .pipe(writable);
 
-                    }
+            stream.on('finish', () => {
+                csv()
+                    .fromFile('rzd.csv')
+                    .then((data) => {
+                        let set = new Set();
+                        for (let row in data) {
+                            set.add(data[row]['Мобильный телефон'])
+                        }
 
-                    console.log('RZD update success');
-                    reply('База обновлена');
-                }
-            )
-        });
+                        request.put({url: `${api}rzd`, form: {phone_numbers: set}}, (err, res, body) => {
+                            if (err) {
+                                return sendError(reply, err);
+                            }
+
+                            console.log('RZD update success');
+                            reply('База обновлена');
+                        });
+
+                        writable.close();
+                        fs.unlinkSync('rzd.csv');
+                    }).catch((err) => sendError(reply, err))
+            });
+        }).catch((err) => sendError(reply, err));
     }
 });
 
