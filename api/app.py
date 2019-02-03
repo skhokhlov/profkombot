@@ -1,10 +1,10 @@
 import os
 import json
 import re
-import csv
+import ast
 from enum import Enum
 import redis
-from flask import Flask, make_response, abort
+from flask import Flask, make_response, abort, request
 
 app = Flask(__name__)
 r = redis.Redis(host='redis', port=6379, db=0)
@@ -18,25 +18,20 @@ def parse_number(tel):
 @app.route('/api/v1/rzd/<int:user_phone>', methods=['GET'])
 def get_user(user_phone):
     tel = parse_number(user_phone)
-    if r.sismember(tel, Tables.RZD):
+    if r.sismember(tel, Tables.RZD.value):
         return make_response(json.dumps(dict(zip(['rzd'], [True]))), 200)
 
     else:
         return make_response(json.dumps(dict(zip(['rzd'], [False]))), 404)
 
 @app.route('/api/v1/rzd', methods=['PUT'])
-def db_update(request):
-    if request.files[0]:
-        csv_reader = csv.reader(request.files[0], delimiter=',')
-        line_count = 0
-        for row in csv_reader:
-            if line_count == 0:
-                line_count += 1
-            else:
-                r.sadd(row[6], Tables.RZD)
-                line_count += 1
+def db_update():
+    data = request.form.get('phone_numbers', False)
+    if data:
+        for tel in ast.literal_eval(data):
+            r.sadd(parse_number(tel), Tables.RZD.value)
 
-        make_response(json.dumps(dict(zip(['status'], ['OK']))), 200)
+        return make_response(json.dumps(dict(zip(['status'], ['OK']))), 200)
 
     else:
         return make_response(json.dumps(dict(zip(['status'], ['Bad Request']))), 400)

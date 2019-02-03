@@ -18,6 +18,7 @@ const sendError = (reply, err) => {
     reply('Произошла ошибка').catch((err) => console.error(err));
 };
 
+const makeUpTel = (tel) => parseInt(tel.replace(/^8/, 7));
 
 // // Register session middleware
 bot.use(session());
@@ -53,16 +54,21 @@ bot.on('document', ({reply, session, message, telegram}) => {
                     .then((data) => {
                         let set = new Set();
                         for (let row in data) {
-                            set.add(data[row]['Мобильный телефон'])
+                            set.add(makeUpTel(data[row]['Мобильный телефон']))
                         }
 
-                        request.put({url: `${api}rzd`, form: {phone_numbers: set}}, (err, res, body) => {
-                            if (err) {
+                        request({
+                            method: 'PUT',
+                            uri: `${api}rzd`,
+                            form: {phone_numbers: JSON.stringify([...set])}
+                        }, (err, res, body) => {
+                            if (err && res.statusCode !== 200) {
                                 return sendError(reply, err);
                             }
 
                             console.log('RZD update success');
                             reply('База обновлена');
+
                         });
 
                         writable.close();
