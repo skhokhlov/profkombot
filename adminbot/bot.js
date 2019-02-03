@@ -76,6 +76,42 @@ bot.on('document', ({reply, session, message, telegram}) => {
                     }).catch((err) => sendError(reply, err))
             });
         }).catch((err) => sendError(reply, err));
+
+    } else if (/^(дотации|subsidies)$/.test(message.caption.toLowerCase())) {
+        reply('Обновление базы дотаций');
+        telegram.getFile(message.document.file_id).then(({file_path}) => {
+            const writable = fs.createWriteStream('subsidies.csv');
+            let stream = request.get(`https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file_path}`)
+                .pipe(writable);
+
+            stream.on('finish', () => {
+                csv()
+                    .fromFile('subsidies.csv')
+                    .then((data) => {
+                        let set = new Set();
+                        for (let row in data) {
+                            set.add(makeUpTel(data[row]['Мобильный телефон']))
+                        }
+
+                        request({
+                            method: 'PUT',
+                            uri: `${api}subsidies`,
+                            form: {phone_numbers: JSON.stringify([...set])}
+                        }, (err, res, body) => {
+                            if (err && res.statusCode !== 200) {
+                                return sendError(reply, err);
+                            }
+
+                            console.log('SUBSIDIES update success');
+                            reply('База обновлена');
+
+                        });
+
+                        writable.close();
+                        fs.unlinkSync('subsidies.csv');
+                    }).catch((err) => sendError(reply, err))
+            });
+        }).catch((err) => sendError(reply, err));
     }
 });
 

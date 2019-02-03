@@ -114,6 +114,33 @@ bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
     }
 });
 
+bot.hears(/(дотации|Дотации)/, ({match, reply, session}) => {
+    if (session.tel == null) {
+        reply('Сначала нужно отправить номер телефона');
+        return requestContact(reply);
+    } else {
+        request.get(`${api}subsidies/${session.tel}`, (err, res, body) => {
+            if (err) {
+                console.error(err);
+                sendError(reply);
+
+            }
+
+            if (res.statusCode === 200) {
+                let data = JSON.parse(body);
+                reply(`${session.tel} есть в базе дотаций`).catch(err => console.error(err));
+
+            } else if (res.statusCode === 404) {
+                return reply(`${session.tel} не найден в базе дотаций`);
+
+            } else {
+                sendError(reply);
+
+            }
+        });
+    }
+});
+
 bot.hears(/Контакты отделений/, ({match, reply, session}) => {
     reply(`Отделения Профкома студентов находтся в трех кампусах университета:\n
     Вернадского 78 ауд. А-170\n

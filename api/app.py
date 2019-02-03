@@ -24,6 +24,9 @@ def response(data, status=200):
 
 
 def update_index(index, phone_numbers):
+    for tel in r.keys():
+        r.srem(tel, index)
+
     for tel in phone_numbers:
         r.sadd(parse_number(tel), index)
 
