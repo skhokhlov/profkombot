@@ -20,6 +20,42 @@ const sendError = (reply, err) => {
 
 const makeUpTel = (tel) => parseInt(tel.replace(/^8/, 7));
 
+function updateIndex(telegram, reply, index) {
+    telegram.getFile(message.document.file_id).then(({file_path}) => {
+        const writable = fs.createWriteStream(`${index}.csv`);
+        let stream = request.get(`https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file_path}`)
+            .pipe(writable);
+
+        stream.on('finish', () => {
+            csv()
+                .fromFile(`${index}.csv`)
+                .then((data) => {
+                    let set = new Set();
+                    for (let row in data) {
+                        set.add(makeUpTel(data[row]['Мобильный телефон']))
+                    }
+
+                    request({
+                        method: 'PUT',
+                        uri: api + index,
+                        form: {phone_numbers: JSON.stringify([...set])}
+                    }, (err, res, body) => {
+                        if (err && res.statusCode !== 200) {
+                            return sendError(reply, err);
+                        }
+
+                        console.log(`${index} update success`);
+                        reply('База обновлена');
+
+                    });
+
+                    writable.close();
+                    fs.unlinkSync(`${index}.csv`);
+                }).catch((err) => sendError(reply, err))
+        });
+    }).catch((err) => sendError(reply, err));
+}
+
 // // Register session middleware
 bot.use(session());
 
@@ -36,82 +72,19 @@ bot.command('start', ({reply}) => {
     reply('Бот Профокма студентов РТУ МИРЭА. Бот работает в тестовом режиме.');
 });
 
-bot.on('document', ({reply, session, message, telegram}) => {
+bot.on('document', ({reply, message, telegram}) => {
     if (message.caption == null) {
         return reply('Для корректной работы нужно отправить файл с подписью');
     }
 
     if (/^(ржд|rzd)$/.test(message.caption.toLowerCase())) {
         reply('Обновление базы РЖД');
-        telegram.getFile(message.document.file_id).then(({file_path}) => {
-            const writable = fs.createWriteStream('rzd.csv');
-            let stream = request.get(`https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file_path}`)
-                .pipe(writable);
-
-            stream.on('finish', () => {
-                csv()
-                    .fromFile('rzd.csv')
-                    .then((data) => {
-                        let set = new Set();
-                        for (let row in data) {
-                            set.add(makeUpTel(data[row]['Мобильный телефон']))
-                        }
-
-                        request({
-                            method: 'PUT',
-                            uri: `${api}rzd`,
-                            form: {phone_numbers: JSON.stringify([...set])}
-                        }, (err, res, body) => {
-                            if (err && res.statusCode !== 200) {
-                                return sendError(reply, err);
-                            }
-
-                            console.log('RZD update success');
-                            reply('База обновлена');
-
-                        });
-
-                        writable.close();
-                        fs.unlinkSync('rzd.csv');
-                    }).catch((err) => sendError(reply, err))
-            });
-        }).catch((err) => sendError(reply, err));
+        updateIndex(telegram, reply, 'rzd');
 
     } else if (/^(дотации|subsidies)$/.test(message.caption.toLowerCase())) {
         reply('Обновление базы дотаций');
-        telegram.getFile(message.document.file_id).then(({file_path}) => {
-            const writable = fs.createWriteStream('subsidies.csv');
-            let stream = request.get(`https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file_path}`)
-                .pipe(writable);
+        updateIndex(telegram, reply, 'subsidies');
 
-            stream.on('finish', () => {
-                csv()
-                    .fromFile('subsidies.csv')
-                    .then((data) => {
-                        let set = new Set();
-                        for (let row in data) {
-                            set.add(makeUpTel(data[row]['Мобильный телефон']))
-                        }
-
-                        request({
-                            method: 'PUT',
-                            uri: `${api}subsidies`,
-                            form: {phone_numbers: JSON.stringify([...set])}
-                        }, (err, res, body) => {
-                            if (err && res.statusCode !== 200) {
-                                return sendError(reply, err);
-                            }
-
-                            console.log('SUBSIDIES update success');
-                            reply('База обновлена');
-
-                        });
-
-                        writable.close();
-                        fs.unlinkSync('subsidies.csv');
-                    }).catch((err) => sendError(reply, err))
-            });
-        }).catch((err) => sendError(reply, err));
     }
 });
 
