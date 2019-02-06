@@ -20,6 +20,16 @@ const sendError = (reply, err) => {
 
 const makeUpTel = (tel) => parseInt(tel.replace(/^8/, 7));
 
+function filtered_keys(obj, filter) {
+    let key, keys = [];
+    for (key in obj) {
+        if (obj.hasOwnProperty(key) && filter.test(key.toLocaleLowerCase())) {
+            keys.push(key);
+        }
+    }
+    return keys
+}
+
 function updateIndex(telegram, reply, index) {
     telegram.getFile(message.document.file_id).then(({file_path}) => {
         const writable = fs.createWriteStream(`${index}.csv`);
@@ -32,7 +42,8 @@ function updateIndex(telegram, reply, index) {
                 .then((data) => {
                     let set = new Set();
                     for (let row in data) {
-                        set.add(makeUpTel(data[row]['Мобильный телефон']))
+                        set.add(makeUpTel(data[row][filtered_keys(data[row], /телефон/)[0]]))
+                        // set.add(makeUpTel(data[row]['Мобильный телефон']))
                     }
 
                     request({
