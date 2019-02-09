@@ -18,7 +18,7 @@ const sendError = (reply, err) => {
     reply('Произошла ошибка').catch((err) => console.error(err));
 };
 
-const makeUpTel = (tel) => parseInt(tel.replace(/^8/, 7));
+const makeUpTel = (tel) => parseInt(parseInt(tel.replace(/[^0-9]/g, ''), 10).toString().replace(/^8/, 7));
 
 function filtered_keys(obj, filter) {
     let key, keys = [];
@@ -30,8 +30,8 @@ function filtered_keys(obj, filter) {
     return keys
 }
 
-function updateIndex(telegram, reply, index) {
-    telegram.getFile(message.document.file_id).then(({file_path}) => {
+function updateIndex(telegram, fileId, reply, index) {
+    telegram.getFile(fileId).then(({file_path}) => {
         const writable = fs.createWriteStream(`${index}.csv`);
         let stream = request.get(`https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file_path}`)
             .pipe(writable);
@@ -51,7 +51,7 @@ function updateIndex(telegram, reply, index) {
                         uri: api + index,
                         form: {phone_numbers: JSON.stringify([...set])}
                     }, (err, res, body) => {
-                        if (err && res.statusCode !== 200) {
+                        if (err || res.statusCode !== 200) {
                             return sendError(reply, err);
                         }
 
@@ -90,11 +90,11 @@ bot.on('document', ({reply, message, telegram}) => {
 
     if (/^(ржд|rzd)$/.test(message.caption.toLowerCase())) {
         reply('Обновление базы РЖД');
-        updateIndex(telegram, reply, 'rzd');
+        updateIndex(telegram, message.document.file_id, reply, 'rzd');
 
     } else if (/^(дотации|subsidies)$/.test(message.caption.toLowerCase())) {
         reply('Обновление базы дотаций');
-        updateIndex(telegram, reply, 'subsidies');
+        updateIndex(telegram, message.document.file_id, reply, 'subsidies');
 
     }
 });
