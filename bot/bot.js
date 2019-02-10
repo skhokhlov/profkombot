@@ -72,11 +72,11 @@ bot.use((ctx, next) => {
     })
 });
 
-bot.command('start', ({reply, message}) => {
+bot.command('start', ({reply, chat}) => {
     request({
         method: 'POST',
         uri: api + 'analytics',
-        form: {user: JSON.stringify(message)}
+        form: {user: JSON.stringify(chat)}
     });
 
     reply('Бот Профокма студентов РТУ МИРЭА. Бот работает в тестовом режиме.');
@@ -95,7 +95,7 @@ bot.hears(/Задать вопрос/, ({reply}) => reply('Сейчас зада
         Markup.urlButton('Перейти️', 'https://t.me/mireaprofkomfeedbackbot')
     ]))));
 
-bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session, message}) => {
+bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session, chat}) => {
     if (session.tel == null) {
         reply('Сначала нужно отправить номер телефона');
         return requestContact(reply);
@@ -103,7 +103,7 @@ bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session, message}
         request({
             method: 'POST',
             uri: api + 'analytics/rzd',
-            form: {user: JSON.stringify(message)}
+            form: {user: JSON.stringify(chat)}
         });
 
         request.get(`${api}rzd/${session.tel}`, (err, res, body) => {
@@ -127,7 +127,7 @@ bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session, message}
     }
 });
 
-bot.hears(/(дотации|Дотации)/, ({match, reply, session, message}) => {
+bot.hears(/(дотации|Дотации)/, ({match, reply, session, chat}) => {
     if (session.tel == null) {
         reply('Сначала нужно отправить номер телефона');
         return requestContact(reply);
@@ -135,7 +135,7 @@ bot.hears(/(дотации|Дотации)/, ({match, reply, session, message}) 
         request({
             method: 'POST',
             uri: api + 'analytics/subsidies',
-            form: {user: JSON.stringify(message)}
+            form: {user: JSON.stringify(chat)}
         });
 
         request.get(`${api}subsidies/${session.tel}`, (err, res, body) => {

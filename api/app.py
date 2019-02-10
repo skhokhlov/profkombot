@@ -48,12 +48,12 @@ def get_analytics(index):
 
 
 def incr_counter():
-    r.hsetnx(Tables.COUNTER, str(date.today()), 0)
-    r.hincrby(Tables.COUNTER, str(date.today()), 1)
+    r.hsetnx(Tables.COUNTER.value, str(date.today()), 0)
+    r.hincrby(Tables.COUNTER.value, str(date.today()), 1)
 
 
 def get_counter():
-    return r.hgetall(Tables.COUNTER)
+    return r.hgetall(Tables.COUNTER.value)
 
 
 @app.route('/api/v1/rzd/<int:user_phone>', methods=['GET'])
@@ -101,14 +101,14 @@ def analytics():
     if request.method == 'POST':
         data = request.form.get('user', False)
         if data:
-            update_analytics(Tables.USERS.value, ast.literal_eval(data))
+            update_analytics(Tables.USERS.value, data)
             return response(dict(zip(['status'], ['OK'])))
 
         else:
             return response(dict(zip(['status'], ['Bad Request'])), 400)
 
     elif request.method == 'GET':
-        return response(get_analytics(Tables.USERS.value))
+        return response(str(get_analytics(Tables.USERS.value)))
 
 
 @app.route('/api/v1/analytics/<string:section>', methods=['POST', 'GET'])
@@ -128,14 +128,14 @@ def analytics_section(section):
     if request.method == 'POST':
         data = request.form.get('user', False)
         if data:
-            update_analytics(key, ast.literal_eval(data))
+            update_analytics(key, data)
             return response(dict(zip(['status'], ['OK'])))
 
         else:
             return response(dict(zip(['status'], ['Bad Request'])), 400)
 
     elif request.method == 'GET':
-        return response(get_analytics(key))
+        return response(str(get_analytics(key)))
 
 
 @app.route('/api/v1/analytics/counter', methods=['POST', 'GET'])
@@ -145,7 +145,7 @@ def analytics_counter():
         return response(dict(zip(['status'], ['OK'])))
 
     elif request.method == 'GET':
-        return response(get_counter())
+        return response(str(get_counter()))
 
 
 @app.route('/', methods=['GET'])
@@ -154,17 +154,17 @@ def get_home():
 
 
 @app.errorhandler(404)
-def not_found(error):
+def not_found():
     return response(dict(zip(['status'], ['Not Found'])), 404)
 
 
 @app.errorhandler(405)
-def method_not_allowed(error):
+def method_not_allowed():
     return response(dict(zip(['status'], ['Method Not Allowed'])), 405)
 
 
 @app.errorhandler(500)
-def server_error(error):
+def server_error():
     return response(dict(zip(['status'], ['Server Error'])), 400)
 
 
