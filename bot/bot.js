@@ -77,7 +77,7 @@ bot.command('start', ({reply, message}) => {
         method: 'POST',
         uri: api + 'analytics',
         form: {user: JSON.stringify(message)}
-    };
+    });
 
     reply('Бот Профокма студентов РТУ МИРЭА. Бот работает в тестовом режиме.');
     mainMenu(reply);
@@ -104,7 +104,7 @@ bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session, message}
             method: 'POST',
             uri: api + 'analytics/rzd',
             form: {user: JSON.stringify(message)}
-        };
+        });
 
         request.get(`${api}rzd/${session.tel}`, (err, res, body) => {
             if (err) {
@@ -136,7 +136,7 @@ bot.hears(/(дотации|Дотации)/, ({match, reply, session, message}) 
             method: 'POST',
             uri: api + 'analytics/subsidies',
             form: {user: JSON.stringify(message)}
-        };
+        });
 
         request.get(`${api}subsidies/${session.tel}`, (err, res, body) => {
             if (err) {
@@ -146,14 +146,13 @@ bot.hears(/(дотации|Дотации)/, ({match, reply, session, message}) 
             }
 
             if (res.statusCode === 200) {
-                let data = JSON.parse(body);
-                reply(`${session.tel} есть в базе дотаций`).catch(err => console.error(err));
+                return reply(`${session.tel} есть в базе дотаций`).catch(err => console.error(err));
 
             } else if (res.statusCode === 404) {
                 return reply(`${session.tel} не найден в базе дотаций`);
 
             } else {
-                sendError(reply);
+                return sendError(reply);
 
             }
         });
