@@ -63,6 +63,8 @@ bot.use(session());
 
 // Register logger middleware
 bot.use((ctx, next) => {
+    request.post(`${api}analytics/counter`);
+
     const start = new Date();
     return next().then(() => {
         let ms = new Date() - start;
@@ -70,7 +72,13 @@ bot.use((ctx, next) => {
     })
 });
 
-bot.command('start', ({reply}) => {
+bot.command('start', ({reply, message}) => {
+    request({
+        method: 'POST',
+        uri: api + 'analytics',
+        form: {user: JSON.stringify(message)}
+    };
+
     reply('Бот Профокма студентов РТУ МИРЭА. Бот работает в тестовом режиме.');
     mainMenu(reply);
 });
@@ -87,11 +95,17 @@ bot.hears(/Задать вопрос/, ({reply}) => reply('Сейчас зада
         Markup.urlButton('Перейти️', 'https://t.me/mireaprofkomfeedbackbot')
     ]))));
 
-bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
+bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session, message}) => {
     if (session.tel == null) {
         reply('Сначала нужно отправить номер телефона');
         return requestContact(reply);
     } else {
+        request({
+            method: 'POST',
+            uri: api + 'analytics/rzd',
+            form: {user: JSON.stringify(message)}
+        };
+
         request.get(`${api}rzd/${session.tel}`, (err, res, body) => {
             if (err) {
                 console.error(err);
@@ -100,25 +114,30 @@ bot.hears(/(ржд|Ржд|РЖД) бонус/, ({match, reply, session}) => {
             }
 
             if (res.statusCode === 200) {
-                let data = JSON.parse(body);
-                reply(`${session.tel} есть в базе РЖД бонус`).catch(err => console.error(err));
+                return reply(`${session.tel} есть в базе РЖД бонус`).catch(err => console.error(err));
 
             } else if (res.statusCode === 404) {
                 return reply(`${session.tel} не найден в базе РЖД бонус`);
 
             } else {
-                sendError(reply);
+                return sendError(reply);
 
             }
         });
     }
 });
 
-bot.hears(/(дотации|Дотации)/, ({match, reply, session}) => {
+bot.hears(/(дотации|Дотации)/, ({match, reply, session, message}) => {
     if (session.tel == null) {
         reply('Сначала нужно отправить номер телефона');
         return requestContact(reply);
     } else {
+        request({
+            method: 'POST',
+            uri: api + 'analytics/subsidies',
+            form: {user: JSON.stringify(message)}
+        };
+
         request.get(`${api}subsidies/${session.tel}`, (err, res, body) => {
             if (err) {
                 console.error(err);

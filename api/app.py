@@ -3,6 +3,7 @@ import json
 import re
 import ast
 from enum import Enum
+from datetime import date
 import redis
 from flask import Flask, make_response, abort, request
 
@@ -13,6 +14,9 @@ r = redis.Redis(host='redis', port=6379, db=0)
 class Tables(Enum):
     RZD = 'RZD'
     SUBSIDIES = 'SUBSIDIES'
+    ANALYTICS = 'ANALYTICS'
+    USERS = ANALYTICS + 'USERS'
+    COUNTER = ANALYTICS + 'COUNTER'
 
 
 def parse_number(tel):
@@ -33,6 +37,23 @@ def update_index(index, phone_numbers):
 
 def check_in_index(index, tel):
     return r.sismember(tel, index)
+
+
+def update_analytics(index, data):
+    return r.sadd(index, data)
+
+
+def get_analytics(index):
+    return r.smembers(index)
+
+
+def incr_counter():
+    r.hsetnx(Tables.COUNTER, str(date.today()), 0)
+    r.hincrby(Tables.COUNTER, str(date.today()), 1)
+
+
+def get_counter():
+    return r.hgetall(Tables.COUNTER)
 
 
 @app.route('/api/v1/rzd/<int:user_phone>', methods=['GET'])
@@ -73,6 +94,58 @@ def update_subsidies():
 
     else:
         return response(dict(zip(['status'], ['Bad Request'])), 400)
+
+
+@app.route('/api/v1/analytics', methods=['POST', 'GET'])
+def analytics():
+    if request.method == 'POST':
+        data = request.form.get('user', False)
+        if data:
+            update_analytics(Tables.USERS.value, ast.literal_eval(data))
+            return response(dict(zip(['status'], ['OK'])))
+
+        else:
+            return response(dict(zip(['status'], ['Bad Request'])), 400)
+
+    elif request.method == 'GET':
+        return response(get_analytics(Tables.USERS.value))
+
+
+@app.route('/api/v1/analytics/<string:section>', methods=['POST', 'GET'])
+def analytics_section(section):
+    section = section.upper()
+    key = Tables.USERS.value + ':'
+
+    if section == Tables.RZD.value:
+        key += Tables.RZD.value
+
+    elif section == Tables.SUBSIDIES.value:
+        key += Tables.SUBSIDIES.value
+
+    else:
+        return not_found()
+
+    if request.method == 'POST':
+        data = request.form.get('user', False)
+        if data:
+            update_analytics(key, ast.literal_eval(data))
+            return response(dict(zip(['status'], ['OK'])))
+
+        else:
+            return response(dict(zip(['status'], ['Bad Request'])), 400)
+
+    elif request.method == 'GET':
+        return response(get_analytics(key))
+
+
+@app.route('/api/v1/analytics/counter', methods=['POST', 'GET'])
+def analytics_counter():
+    if request.method == 'POST':
+        incr_counter()
+        return response(dict(zip(['status'], ['OK'])))
+
+    elif request.method == 'GET':
+        return response(get_counter())
 
 
 @app.route('/', methods=['GET'])
